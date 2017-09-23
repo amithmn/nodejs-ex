@@ -2,7 +2,8 @@
 var express = require('express'),
   app = express(),
   graph = require('fbgraph'),
-  morgan = require('morgan');
+  morgan = require('morgan'),
+  request = require('request-promise');
 
 Object.assign = require('object-assign')
 
@@ -10,7 +11,7 @@ app.engine('html', require('ejs').renderFile);
 app.use(morgan('combined'))
 
 var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-  ip = process.env.IP || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
+  ip = process.env.IP || process.env.OPENSHIFT_NODEJS_IP || 'localhost',
   mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
   mongoURLLabel = "";
 
@@ -18,9 +19,13 @@ var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
 var conf = {
   client_id: '28da84b4aa827c07a1f326e9d57086f8',
   client_secret: 'd5f908b55b06c469fdc1503b67357698',
-  scope: 'email, user_about_me, user_birthday, user_location, publish_stream',
+  scope: 'email, publish_actions, manage_pages',
   redirect_uri: 'http://' + ip + ':' + port + '/auth/facebook'
 };
+
+var router = express.Router([{
+  mergeParams : false
+}]);
 
 if (mongoURL == null && process.env.DATABASE_SERVICE_NAME) {
   var mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase(),
@@ -74,8 +79,6 @@ app.set('views', __dirname + '/views');
 app.use(express.static(__dirname + '/public'));
 //});
 
-
-
 app.get('/', function(req, res) {
   // try to initialize the db on every request if it's not already
   // initialized.
@@ -100,6 +103,45 @@ app.get('/', function(req, res) {
       pageCountMessage: null
     });
   }
+});
+
+router.get('/userlogin', function(req, res, next) {
+  console.log(req.query.token);
+  var accessToken = req.query.token;
+  graph.setAccessToken(accessToken);
+  var searchOptions = {
+    q:     "divya",
+    type:  "user"
+  };
+
+  graph.search(searchOptions, function(err, res) {
+    console.log(res); // {data: [{id: xxx, from: ...}, {id: xxx, from: ...}]}
+  });
+
+  const userFieldSet = 'name, link, is_verified, picture';
+  const pageFieldSet = 'name, category, link, picture, is_verified';
+
+  const options = {
+    method: 'GET',
+    uri: 'https://graph.facebook.com/search',
+    qs: {
+      access_token: accessToken,
+      q: 'divya',
+      type: 'user',
+      fields: searchType === 'page' ? pageFieldSet : userFieldSet
+    }
+  };
+
+  request(options)
+    .then(fbRes => {
+// Search results are in the data property of the response.
+// There is another property that allows for pagination of results.
+// Pagination will not be covered in this post,
+// so we only need the data property of the parsed response.
+      const parsedRes = JSON.parse(fbRes).data;
+      res.json(parsedRes);
+    })
+
 });
 
 app.get('/auth/facebook', function(req, res) {

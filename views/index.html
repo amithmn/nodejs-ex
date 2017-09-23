@@ -67,13 +67,14 @@ i<meta name="keywords" content="connect credibility recruiting system" />
   function statusChangeCallback(response) {
     console.log('statusChangeCallback');
     console.log(response);
+		var token = response.headers.get('x-auth-token');
     // The response object is returned with a status field that lets the
     // app know the current login status of the person.
     // Full docs on the response object can be found in the documentation
     // for FB.getLoginStatus().
     if (response.status === 'connected') {
       // Logged into your app and Facebook.
-      testAPI();
+      testAPI(token);
     } else {
       // The person is not logged into your app or we are unable to tell.
       document.getElementById('status').innerHTML = 'Please log ' +
@@ -128,13 +129,14 @@ i<meta name="keywords" content="connect credibility recruiting system" />
 
   // Here we run a very simple test of the Graph API after login is
   // successful.  See statusChangeCallback() for when this call is made.
-  function testAPI() {
+  function testAPI(token) {
     console.log('Welcome!  Fetching your information.... ');
-    FB.api('/me', function(response) {
+		window.location.pathname = ''
+    /*FB.api('/me', function(response) {
       console.log('Successful login for: ' + response.name);
       document.getElementById('status').innerHTML =
         'Thanks for logging in, ' + response.name + '!';
-    });
+    });*/
   }
 </script>
 
