@@ -75,6 +75,7 @@ i<meta name="keywords" content="connect credibility recruiting system" />
     if (response.status === 'connected') {
       // Logged into your app and Facebook.
       testAPI(token);
+
     } else {
       // The person is not logged into your app or we are unable to tell.
       document.getElementById('status').innerHTML = 'Please log ' +
@@ -131,7 +132,7 @@ i<meta name="keywords" content="connect credibility recruiting system" />
   // successful.  See statusChangeCallback() for when this call is made.
   function testAPI(token) {
     console.log('Welcome!  Fetching your information.... ');
-		window.location.pathname = ''
+		window.location.href = window.location.href + '/userlogin?token=' + token;
     /*FB.api('/me', function(response) {
       console.log('Successful login for: ' + response.name);
       document.getElementById('status').innerHTML =
